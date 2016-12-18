@@ -7,7 +7,7 @@ use std::io::prelude::*;
 use std::path::Path;
 use std::net::{TcpListener, TcpStream};
 use std::str::from_utf8;
-use rori_utils::client::ConfigServer;
+use rori_utils::client::{ConfigServer, RoriClient};
 use rori_utils::data::RoriData;
 use rustc_serialize::json::decode;
 use std::fs::File;
@@ -15,6 +15,12 @@ use std::process::Command;
 
 struct Client {
     stream: TcpStream,
+}
+
+#[derive(Clone, RustcDecodable, RustcEncodable, Default, PartialEq, Debug)]
+struct RoriServer {
+    rori_ip: Option<String>,
+    rori_port: Option<String>,
 }
 
 impl Client {
@@ -39,15 +45,22 @@ impl Client {
 
 pub struct Endpoint {
     address: String,
+    rori_address: String,
 }
 
 impl Endpoint {
-    pub fn parse_config(data: String) -> String {
+    fn parse_config_server(data: String) -> String {
         let params: ConfigServer = decode(&data[..]).unwrap();
-
         format!("{}:{}",
                 &params.ip.unwrap_or(String::from("")),
                 &params.port.unwrap_or(String::from("")))
+    }
+
+    fn parse_config_rori(data: String) -> String {
+        let params: RoriServer = decode(&data[..]).unwrap();
+        format!("{}:{}",
+                &params.rori_ip.unwrap_or(String::from("")),
+                &params.rori_port.unwrap_or(String::from("")))
     }
 
     pub fn new<P: AsRef<Path>>(config: P) -> Endpoint {
@@ -59,11 +72,15 @@ impl Endpoint {
         file.read_to_string(&mut data)
             .ok()
             .expect("failed to read!");
-        let address = Endpoint::parse_config(data);
-        if address == ":" {
+        let address = Endpoint::parse_config_server(data.clone());
+        let rori_address = Endpoint::parse_config_rori(data);
+        if address == ":" || rori_address == ":" {
             println!("Empty config for the connection to the server");
         }
-        Endpoint { address: address }
+        Endpoint {
+            address: address,
+            rori_address: rori_address,
+        }
     }
 
     pub fn start(&self) {
@@ -93,10 +110,22 @@ impl Endpoint {
         }
         drop(listener);
     }
+
+    pub fn register(&self) {
+        // TODO security and if correctly registered
+        let rori_address = self.rori_address.clone();
+        let address = self.address.clone();
+        let mut client = RoriClient { address: rori_address };
+        let mut content = String::from(address);
+        content.push_str("|");
+        content.push_str("music");
+        client.send_to_rori("AmarOk", &*content, "irc_entry_module", "register")
+    }
 }
 
 // Launch RoriIrcEntry
 fn main() {
     let endpoint = Endpoint::new("config_server.json");
+    endpoint.register();
     endpoint.start();
 }

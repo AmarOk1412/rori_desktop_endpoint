@@ -1,5 +1,7 @@
 {
  "ip":"127.0.0.1",
  "port":"1414",
- "can_process":"music"
+ "can_process":"music",
+ "rori_ip":"127.0.0.1",
+ "rori_port":"1412"
 }

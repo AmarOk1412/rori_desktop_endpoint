@@ -119,7 +119,7 @@ impl Endpoint {
         let mut content = String::from(address);
         content.push_str("|");
         content.push_str("music");
-        client.send_to_rori("AmarOk", &*content, "irc_entry_module", "register")
+        client.send_to_rori("AmarOk", &*content, "rori_desktop_entry", "register")
     }
 }
 

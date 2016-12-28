@@ -18,6 +18,6 @@ fn main() {
     if endpoint.is_registered {
         endpoint.start();
     } else {
-        println!("[ERROR]Endpoint is not registered.");
+        error!("Endpoint is not registered.");
     }
 }

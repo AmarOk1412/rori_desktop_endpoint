@@ -119,7 +119,7 @@ impl Endpoint {
                     }
                 }
                 Err(e) => {
-                    println!("Connection failed because {}", e);
+                    error!(target:"endpoint", "Connection failed because {}", e);
                 }
             };
         }

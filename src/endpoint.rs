@@ -113,9 +113,18 @@ impl Endpoint {
                     if data_to_process.datatype == "music" {
                         Command::new("python3")
                             .arg("scripts/music.py")
-                            .arg(data_to_process.content)
+                            .arg(&data_to_process.content)
                             .spawn()
                             .expect("ls command failed to start");
+                    }
+                    if data_to_process.datatype == "shell" {
+                        info!(target:"endpoint", "Execute: {}", &data_to_process.content);
+                        let output = Command::new("sh")
+                            .arg("-c")
+                            .arg(&*data_to_process.content)
+                            .output()
+                            .expect("failed to execute process");
+                        let _ = output.stdout;
                     }
                 }
                 Err(e) => {

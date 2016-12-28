@@ -5,5 +5,5 @@
  "rori_port":"1412",
  "owner":"AmarOk",
  "name":"rori_desktop_client",
- "compatible_types":"music"
+ "compatible_types":"music|shell"
 }

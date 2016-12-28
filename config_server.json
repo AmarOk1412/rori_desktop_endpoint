@@ -1,7 +1,9 @@
 {
  "ip":"127.0.0.1",
  "port":"1414",
- "can_process":"music",
  "rori_ip":"127.0.0.1",
- "rori_port":"1412"
+ "rori_port":"1412",
+ "owner":"AmarOk",
+ "name":"rori_desktop_client",
+ "compatible_types":"music"
 }

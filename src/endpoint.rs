@@ -1,3 +1,5 @@
+use openssl::ssl::{SslContext, SslMethod, SslStream, SSL_VERIFY_NONE};
+use openssl::x509::X509FileType::PEM;
 use rori_utils::data::RoriData;
 use rori_utils::client::{RoriClient, ConfigServer};
 use rustc_serialize::json::decode;
@@ -8,15 +10,16 @@ use std::io::prelude::*;
 use std::process::Command;
 use std::fs::File;
 
+
 #[allow(dead_code)]
 struct Client {
-    stream: TcpStream,
+    stream: SslStream<TcpStream>,
 }
 
 #[allow(dead_code)]
 impl Client {
-    fn new(stream: TcpStream) -> Client {
-        Client { stream: stream }
+    fn new(stream: SslStream<TcpStream>) -> Client {
+        return Client { stream: stream };
     }
 
     fn read(&mut self) -> String {
@@ -38,6 +41,8 @@ impl Client {
 struct RoriServer {
     rori_ip: Option<String>,
     rori_port: Option<String>,
+    pub cert: Option<String>,
+    pub key: Option<String>,
 }
 
 #[derive(Clone, RustcDecodable, RustcEncodable, Default, PartialEq, Debug)]
@@ -55,6 +60,8 @@ pub struct Endpoint {
     owner: String,
     name: String,
     compatible_types: String,
+    cert: String,
+    key: String,
 }
 
 #[allow(dead_code)]
@@ -64,13 +71,6 @@ impl Endpoint {
         format!("{}:{}",
                 &params.ip.unwrap_or(String::from("")),
                 &params.port.unwrap_or(String::from("")))
-    }
-
-    fn parse_config_rori(data: String) -> String {
-        let params: RoriServer = decode(&data[..]).unwrap();
-        format!("{}:{}",
-                &params.rori_ip.unwrap_or(String::from("")),
-                &params.rori_port.unwrap_or(String::from("")))
     }
 
     pub fn new<P: AsRef<Path>>(config: P) -> Endpoint {
@@ -83,7 +83,10 @@ impl Endpoint {
             .ok()
             .expect("failed to read!");
         let address = Endpoint::parse_config_server(data.clone());
-        let rori_address = Endpoint::parse_config_rori(data.clone());
+        let params: RoriServer = decode(&data[..]).unwrap();
+        let rori_address = format!("{}:{}",
+                                   &params.rori_ip.unwrap_or(String::from("")),
+                                   &params.rori_port.unwrap_or(String::from("")));
         let details: EndpointDetails = decode(&data[..]).unwrap();
         if address == ":" || rori_address == ":" {
             error!(target:"endpoint", "Empty config for the connection to the server");
@@ -95,15 +98,29 @@ impl Endpoint {
             owner: details.owner.unwrap_or(String::from("")),
             name: details.name.unwrap_or(String::from("")),
             compatible_types: details.compatible_types.unwrap_or(String::from("")),
+            cert: params.cert.unwrap_or(String::from("")),
+            key: params.key.unwrap_or(String::from("")),
         }
     }
 
     pub fn start(&self) {
         let listener = TcpListener::bind(&*self.address).unwrap();
+        let mut ssl_context = SslContext::new(SslMethod::Tlsv1).unwrap();
+        match ssl_context.set_certificate_file(&*self.cert.clone(), PEM) {
+            Ok(_) => info!(target:"Server", "Certificate set"),
+            Err(_) => error!(target:"Server", "Can't set certificate file"),
+        };
+        ssl_context.set_verify(SSL_VERIFY_NONE, None);
+        match ssl_context.set_private_key_file(&*self.key.clone(), PEM) {
+            Ok(_) => info!(target:"Server", "Private key set"),
+            Err(_) => error!(target:"Server", "Can't set private key"),
+        };
         for stream in listener.incoming() {
             match stream {
                 Ok(stream) => {
-                    let mut client = Client::new(stream.try_clone().unwrap());
+                    let ssl_stream = SslStream::accept(&ssl_context, stream.try_clone().unwrap())
+                        .unwrap();
+                    let mut client = Client::new(ssl_stream.try_clone().unwrap());
                     let data_received = client.read();
                     let end = data_received.find(0u8 as char);
                     let (data_received, _) =

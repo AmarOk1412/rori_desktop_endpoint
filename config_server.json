@@ -5,5 +5,7 @@
  "rori_port":"1412",
  "owner":"AmarOk",
  "name":"rori_desktop_client",
- "compatible_types":"music|shell"
+ "compatible_types":"music|shell",
+ "cert":"key/cert.pem",
+ "key":"key/key.pem"
 }

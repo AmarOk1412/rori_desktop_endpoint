@@ -118,30 +118,39 @@ impl Endpoint {
         for stream in listener.incoming() {
             match stream {
                 Ok(stream) => {
-                    let ssl_stream = SslStream::accept(&ssl_context, stream.try_clone().unwrap())
-                        .unwrap();
-                    let mut client = Client::new(ssl_stream.try_clone().unwrap());
-                    let data_received = client.read();
-                    let end = data_received.find(0u8 as char);
-                    let (data_received, _) =
-                        data_received.split_at(end.unwrap_or(data_received.len()));
-                    let data_to_process = RoriData::from_json(String::from(data_received));
-                    // TODO security
-                    if data_to_process.datatype == "music" {
-                        Command::new("python3")
-                            .arg("scripts/music.py")
-                            .arg(&data_to_process.content)
-                            .spawn()
-                            .expect("ls command failed to start");
-                    }
-                    if data_to_process.datatype == "shell" {
-                        info!(target:"endpoint", "Execute: {}", &data_to_process.content);
-                        let output = Command::new("sh")
-                            .arg("-c")
-                            .arg(&*data_to_process.content)
-                            .output()
-                            .expect("failed to execute process");
-                        let _ = output.stdout;
+
+                    let ssl_stream = SslStream::accept(&ssl_context, stream.try_clone().unwrap());
+                    let ssl_ok = match ssl_stream {
+                        Ok(_) => true,
+                        Err(_) => false,
+                    };
+                    if ssl_ok {
+                        let ssl_stream = ssl_stream.unwrap();
+                        let mut client = Client::new(ssl_stream.try_clone().unwrap());
+                        let data_received = client.read();
+                        let end = data_received.find(0u8 as char);
+                        let (data_received, _) =
+                            data_received.split_at(end.unwrap_or(data_received.len()));
+                        let data_to_process = RoriData::from_json(String::from(data_received));
+                        // TODO security
+                        if data_to_process.datatype == "music" {
+                            Command::new("python3")
+                                .arg("scripts/music.py")
+                                .arg(&data_to_process.content)
+                                .spawn()
+                                .expect("ls command failed to start");
+                        }
+                        if data_to_process.datatype == "shell" {
+                            info!(target:"endpoint", "Execute: {}", &data_to_process.content);
+                            let output = Command::new("sh")
+                                .arg("-c")
+                                .arg(&*data_to_process.content)
+                                .output()
+                                .expect("failed to execute process");
+                            let _ = output.stdout;
+                        }
+                    } else {
+                        error!(target:"Server", "Can't create SslStream");
                     }
                 }
                 Err(e) => {

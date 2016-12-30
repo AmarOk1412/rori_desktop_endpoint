@@ -1,6 +1,6 @@
 **Disclaimer: This is a draft version**
 
-# rori_desktop_endpoint
+# RORI Desktop Endpoint
 
 This is a simple endpoint for _[RORI](https://github.com/AmarOk1412/rori/)_. Just a simple application to execute shell and music commands from `rori_server` on a linux computer.
 

@@ -4,7 +4,7 @@
 
 ![](https://travis-ci.org/AmarOk1412/rori_desktop_client.svg?branch=master)
 
-This is a simple endpoint for _[RORI](https://github.com/AmarOk1412/rori/)_. Just a simple application to execute shell and music commands from `rori_server` on a linux computer.
+This is a simple endpoint for _[RORI](https://github.com/AmarOk1412/rori/)_. Just a simple application to execute shell and music commands from `rori_server` on _linux_.
 
 # Installation
 

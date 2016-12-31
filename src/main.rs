@@ -9,15 +9,16 @@ extern crate rustc_serialize;
 mod rori_utils;
 mod endpoint;
 
-use endpoint::Endpoint;
+use endpoint::DesktopEndpoint;
+use rori_utils::endpoint::Endpoint;
 
 fn main() {
     // Init logging
     env_logger::init().unwrap();
 
-    let mut endpoint = Endpoint::new("config_server.json");
+    let mut endpoint = DesktopEndpoint::new("config_server.json");
     endpoint.register();
-    if endpoint.is_registered {
+    if endpoint.is_registered() {
         endpoint.start();
     } else {
         error!("Endpoint is not registered.");

@@ -49,7 +49,14 @@ impl Endpoint for DesktopEndpoint {
                                     .arg("scripts/music.py")
                                     .arg(&data_to_process.content)
                                     .spawn()
-                                    .expect("ls command failed to start");
+                                    .expect("music.py command failed to start");
+                            }
+                            if data_to_process.datatype == "alarm" {
+                                Command::new("python3")
+                                    .arg("scripts/alarm.py")
+                                    .arg(&data_to_process.content)
+                                    .spawn()
+                                    .expect("alarm.py command failed to start");
                             }
                             if data_to_process.datatype == "shell" {
                                 info!(target:"endpoint", "Execute: {}", &data_to_process.content);

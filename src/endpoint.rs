@@ -43,7 +43,6 @@ impl Endpoint for DesktopEndpoint {
                         let data_to_process = RoriData::from_json(String::from(data_received));
                         let data_authorized = self.is_authorized(data_to_process.clone());
                         if data_authorized {
-                            // TODO security
                             if data_to_process.datatype == "music" {
                                 Command::new("python3")
                                     .arg("scripts/music.py")

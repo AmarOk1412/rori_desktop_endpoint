@@ -14,7 +14,7 @@ use rori_utils::endpoint::Endpoint;
 
 fn main() {
     // Init logging
-    env_logger::init().unwrap();
+    env_logger::init();
 
     let mut endpoint = DesktopEndpoint::new("config_server.json");
     endpoint.register();
